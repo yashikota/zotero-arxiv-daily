@@ -73,7 +73,7 @@ Below are all the secrets you need to set. They are invisible to anyone includin
 | MODEL_NAME | | str | Model name when using the API to access LLMs. If not filled in, the default is gpt-4o. Qwen/Qwen2.5-7B-Instruct is recommended when using [SiliconFlow](https://cloud.siliconflow.cn/i/b3XhBRAm). | Qwen/Qwen2.5-7B-Instruct |
 | USE_DISCORD | | bool | Whether to use Discord webhook to send notifications instead of email. If set to `1`, the Discord webhook will be used. | 0 |
 | DISCORD_WEBHOOK_URL | | str | Discord webhook URL. Required when USE_DISCORD is set to `1`. | https://discord.com/api/webhooks/... |
-| DISCORD_USERNAME | | str | Discord bot username. Default to 'ArXiv Daily'. | ArXiv Bot |
+| DISCORD_USERNAME | | str | Discord bot username. Default to 'ArXiv Daily'. | ArXiv Daily |
 
 There are also some public variables (Repository Variables) you can set, which are easy to edit.
 ![vars](./assets/repo_var.png)

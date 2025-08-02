@@ -154,12 +154,16 @@ def send_email(sender:str, receiver:str, password:str,smtp_server:str,smtp_port:
     msg['Subject'] = Header(f'Daily arXiv {today}', 'utf-8').encode()
 
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        # First create the server object without connecting
+        server = smtplib.SMTP()
+        # Then explicitly connect to the server
+        server.connect(smtp_server, smtp_port)
         server.starttls()
     except Exception as e:
         logger.warning(f"Failed to use TLS. {e}")
         logger.warning(f"Try to use SSL.")
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server = smtplib.SMTP_SSL()
+        server.connect(smtp_server, smtp_port)
 
     server.login(sender, password)
     server.sendmail(sender, [receiver], msg.as_string())
