@@ -3,27 +3,7 @@ import time
 import requests
 from tqdm import tqdm
 from loguru import logger
-import re
 import datetime
-
-def html_to_markdown(html):
-    """Convert simple HTML to Discord markdown"""
-    # Replace <strong> or <b> with **
-    html = re.sub(r'<(?:strong|b)>(.*?)</(?:strong|b)>', r'**\1**', html)
-
-    # Replace <em> or <i> with *
-    html = re.sub(r'<(?:em|i)>(.*?)</(?:em|i)>', r'*\1*', html)
-
-    # Replace <a href="...">text</a> with [text](...)
-    html = re.sub(r'<a href="(.*?)".*?>(.*?)</a>', r'[\2](\1)', html)
-
-    # Replace <br>, </br>, <p>, </p> with newline
-    html = re.sub(r'<(?:br|/br|p|/p)/?>', '\n', html)
-
-    # Remove other HTML tags
-    html = re.sub(r'<.*?>', '', html)
-
-    return html
 
 def truncate_text(text, max_length=4000):
     """Truncate text to max_length, ending at a sentence boundary if possible"""
@@ -115,7 +95,7 @@ def send_to_discord(webhook_url, papers, bot_name="ArXiv Daily"):
             response.raise_for_status()
             logger.success("Empty Discord notification sent successfully!")
             return True
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send Discord notification: {e}")
             return False
 
@@ -152,7 +132,7 @@ def send_to_discord(webhook_url, papers, bot_name="ArXiv Daily"):
             if i < len(batches) - 1:
                 time.sleep(1)
 
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send Discord batch {i+1}/{len(batches)}: {e}")
             return False
 

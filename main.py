@@ -112,9 +112,6 @@ if __name__ == '__main__':
     add_argument('--sender', type=str, help='Sender email address')
     add_argument('--receiver', type=str, help='Receiver email address')
     add_argument('--sender_password', type=str, help='Sender email password')
-    add_argument('--use_discord', type=bool, help='Use Discord webhook to send notifications', default=False)
-    add_argument('--discord_webhook_url', type=str, help='Discord webhook URL')
-    add_argument('--discord_username', type=str, help='Discord bot username', default='ArXiv Daily')
     add_argument(
         "--use_llm_api",
         type=bool,
