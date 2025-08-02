@@ -8,7 +8,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from pyzotero import zotero
 from recommender import rerank_paper
 from construct_email import render_email, send_email
-from tqdm import trange,tqdm
+from construct_discord import send_to_discord
+from tqdm import tqdm
 from loguru import logger
 from gitignore_parser import parse_gitignore
 from tempfile import mkstemp
@@ -99,11 +100,11 @@ def add_argument(*args, **kwargs):
 
 
 if __name__ == '__main__':
-    
+
     add_argument('--zotero_id', type=str, help='Zotero user ID')
     add_argument('--zotero_key', type=str, help='Zotero API key')
     add_argument('--zotero_ignore',type=str,help='Zotero collection to ignore, using gitignore-style pattern.')
-    add_argument('--send_empty', type=bool, help='If get no arxiv paper, send empty email',default=False)
+    add_argument('--send_empty', type=bool, help='If get no arxiv paper, send empty email/notification',default=False)
     add_argument('--max_paper_num', type=int, help='Maximum number of papers to recommend',default=100)
     add_argument('--arxiv_query', type=str, help='Arxiv search query')
     add_argument('--smtp_server', type=str, help='SMTP server')
@@ -111,6 +112,9 @@ if __name__ == '__main__':
     add_argument('--sender', type=str, help='Sender email address')
     add_argument('--receiver', type=str, help='Receiver email address')
     add_argument('--sender_password', type=str, help='Sender email password')
+    add_argument('--use_discord', type=bool, help='Use Discord webhook to send notifications', default=False)
+    add_argument('--discord_webhook_url', type=str, help='Discord webhook URL')
+    add_argument('--discord_username', type=str, help='Discord bot username', default='ArXiv Daily')
     add_argument(
         "--use_llm_api",
         type=bool,
@@ -141,11 +145,35 @@ if __name__ == '__main__':
         help="Language of TLDR",
         default="English",
     )
+    # Discord webhook options
+    add_argument(
+        "--discord_webhook_url",
+        type=str,
+        help="Discord webhook URL for sending papers",
+        default=None,
+    )
+    add_argument(
+        "--discord_username",
+        type=str,
+        help="Discord bot username",
+        default="ArXiv Daily",
+    )
+    add_argument(
+        "--use_discord",
+        type=bool,
+        help="Send papers to Discord instead of email",
+        default=False,
+    )
     parser.add_argument('--debug', action='store_true', help='Debug mode')
     args = parser.parse_args()
     assert (
         not args.use_llm_api or args.openai_api_key is not None
     )  # If use_llm_api is True, openai_api_key must be provided
+
+    # Discord webhook validation
+    if args.use_discord and not args.discord_webhook_url:
+        logger.error("Discord webhook URL is required when using Discord mode.")
+        exit(1)
     if args.debug:
         logger.remove()
         logger.add(sys.stdout, level="DEBUG")
@@ -179,8 +207,17 @@ if __name__ == '__main__':
             logger.info("Using Local LLM as global LLM.")
             set_global_llm(lang=args.language)
 
-    html = render_email(papers)
-    logger.info("Sending email...")
-    send_email(args.sender, args.receiver, args.sender_password, args.smtp_server, args.smtp_port, html)
-    logger.success("Email sent successfully! If you don't receive the email, please check the configuration and the junk box.")
-
+    # Send papers via Discord or Email
+    if args.use_discord:
+        logger.info("Sending papers to Discord...")
+        success = send_to_discord(args.discord_webhook_url, papers, args.discord_username)
+        if success:
+            logger.success("Papers sent to Discord successfully!")
+        else:
+            logger.error("Failed to send papers to Discord.")
+            exit(1)
+    else:
+        html = render_email(papers)
+        logger.info("Sending email...")
+        send_email(args.sender, args.receiver, args.sender_password, args.smtp_server, args.smtp_port, html)
+        logger.success("Email sent successfully! If you don't receive the email, please check the configuration and the junk box.")
