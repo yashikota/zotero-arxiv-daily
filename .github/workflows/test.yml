@@ -35,6 +35,7 @@ jobs:
           OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
           MODEL_NAME: ${{ secrets.MODEL_NAME }}
           LANGUAGE: ${{ vars.LANGUAGE }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DELIVERY_CHANNEL: ${{ vars.DELIVERY_CHANNEL }}
         run: |
           uv run main.py --debug
