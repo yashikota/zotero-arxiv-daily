@@ -113,6 +113,13 @@ if __name__ == '__main__':
     add_argument('--receiver', type=str, help='Receiver email address')
     add_argument('--sender_password', type=str, help='Sender email password')
     add_argument(
+        '--delivery_channel',
+        type=str.lower,
+        choices=['email', 'discord', 'both'],
+        default='email',
+        help='Channel used to deliver notifications (email, discord, or both).',
+    )
+    add_argument(
         "--use_llm_api",
         type=bool,
         help="Use OpenAI API to generate TLDR",
@@ -160,6 +167,40 @@ if __name__ == '__main__':
         logger.remove()
         logger.add(sys.stdout, level="INFO")
 
+    delivery_channel = args.delivery_channel
+    send_email_enabled = delivery_channel in {"email", "both"}
+    send_discord_enabled = delivery_channel in {"discord", "both"}
+
+    if send_discord_enabled and not args.discord_webhook_url:
+        logger.error(
+            "Discord delivery selected but DISCORD_WEBHOOK_URL is not set."
+        )
+        sys.exit(1)
+
+    if send_email_enabled:
+        email_config = {
+            "SENDER": args.sender,
+            "RECEIVER": args.receiver,
+            "SENDER_PASSWORD": args.sender_password,
+            "SMTP_SERVER": args.smtp_server,
+            "SMTP_PORT": args.smtp_port,
+        }
+        missing_email_fields = [
+            name for name, value in email_config.items() if value in (None, "")
+        ]
+        if missing_email_fields:
+            logger.error(
+                "Email delivery selected but missing configuration for: {}.",
+                ", ".join(missing_email_fields),
+            )
+            sys.exit(1)
+
+    if not send_email_enabled and not send_discord_enabled:
+        logger.error(
+            "No delivery channel configured. Set DELIVERY_CHANNEL to 'email', 'discord', or 'both'."
+        )
+        sys.exit(1)
+
     logger.info("Retrieving Zotero corpus...")
     corpus = get_zotero_corpus(args.zotero_id, args.zotero_key)
     logger.info(f"Retrieved {len(corpus)} papers from Zotero.")
@@ -172,7 +213,7 @@ if __name__ == '__main__':
     if len(papers) == 0:
         logger.info("No new papers found. Yesterday maybe a holiday and no one submit their work :). If this is not the case, please check the ARXIV_QUERY.")
         if not args.send_empty:
-            if args.discord_webhook_url:
+            if send_discord_enabled:
                 notify_discord([], args.discord_webhook_url)
             sys.exit(0)
     else:
@@ -187,10 +228,26 @@ if __name__ == '__main__':
             logger.info("Using Local LLM as global LLM.")
             set_global_llm(lang=args.language)
 
-    html = render_email(papers)
-    logger.info("Sending email...")
-    send_email(args.sender, args.receiver, args.sender_password, args.smtp_server, args.smtp_port, html)
-    logger.success("Email sent successfully! If you don't receive the email, please check the configuration and the junk box.")
-    if args.discord_webhook_url:
+    if send_email_enabled:
+        html = render_email(papers)
+        logger.info("Sending email...")
+        send_email(
+            args.sender,
+            args.receiver,
+            args.sender_password,
+            args.smtp_server,
+            args.smtp_port,
+            html,
+        )
+        logger.success(
+            "Email sent successfully! If you don't receive the email, please check the configuration and the junk box."
+        )
+    else:
+        logger.info(
+            "Skipping email delivery (delivery_channel={}).",
+            delivery_channel,
+        )
+
+    if send_discord_enabled:
         logger.info("Sending Discord notification...")
         notify_discord(papers, args.discord_webhook_url)
