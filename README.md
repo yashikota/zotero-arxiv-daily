@@ -66,10 +66,15 @@ Below are all the secrets you need to set. They are invisible to anyone includin
 | RECEIVER | ✅ | str | The e-mail address that receives the paper list. | abc@outlook.com |
 | MAX_PAPER_NUM | | int | The maximum number of the papers presented in the email. This value directly affects the execution time of this workflow, because it takes about 70s to generate TL;DR for one paper. `-1` means to present all the papers retrieved. | 50 |
 | SEND_EMPTY | | bool | Whether to send an empty email even if no new papers today. | False |
+| DISCORD_WEBHOOK_URL | | str | Discord Incoming Webhook for channel notifications. | https://discord.com/api/webhooks/... |
 | USE_LLM_API | | bool | Whether to use the LLM API in the cloud or to use local LLM. If set to `1`, the API is used. Else if set to `0`, the workflow will download and deploy an open-source LLM. Default to `0`. | 0 |
 | OPENAI_API_KEY | | str | API Key when using the API to access LLMs. You can get FREE API for using advanced open source LLMs in [SiliconFlow](https://cloud.siliconflow.cn/i/b3XhBRAm). | sk-xxx |
 | OPENAI_API_BASE | | str | API URL when using the API to access LLMs. If not filled in, the default is the OpenAI URL. | https://api.siliconflow.cn/v1 |
 | MODEL_NAME | | str | Model name when using the API to access LLMs. If not filled in, the default is gpt-4o. Qwen/Qwen2.5-7B-Instruct is recommended when using [SiliconFlow](https://cloud.siliconflow.cn/i/b3XhBRAm). | Qwen/Qwen2.5-7B-Instruct |
+
+### Discord Notifications (Optional)
+1. Create an Incoming Webhook in your target Discord channel and copy the full URL.
+2. Store the URL as the `DISCORD_WEBHOOK_URL` secret (or in `.env` locally) and run `python main.py --discord_webhook_url "$DISCORD_WEBHOOK_URL"` to forward the daily summary embeds.
 
 There are also some public variables (Repository Variables) you can set, which are easy to edit.
 ![vars](./assets/repo_var.png)

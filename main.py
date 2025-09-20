@@ -8,6 +8,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from pyzotero import zotero
 from recommender import rerank_paper
 from construct_email import render_email, send_email
+from discord_webhook import notify_discord
 from tqdm import trange,tqdm
 from loguru import logger
 from gitignore_parser import parse_gitignore
@@ -118,6 +119,11 @@ if __name__ == '__main__':
         default=False,
     )
     add_argument(
+        "--discord_webhook_url",
+        type=str,
+        help="Discord webhook URL for paper notifications",
+    )
+    add_argument(
         "--openai_api_key",
         type=str,
         help="OpenAI API key",
@@ -166,7 +172,9 @@ if __name__ == '__main__':
     if len(papers) == 0:
         logger.info("No new papers found. Yesterday maybe a holiday and no one submit their work :). If this is not the case, please check the ARXIV_QUERY.")
         if not args.send_empty:
-          exit(0)
+            if args.discord_webhook_url:
+                notify_discord([], args.discord_webhook_url)
+            sys.exit(0)
     else:
         logger.info("Reranking papers...")
         papers = rerank_paper(papers, corpus)
@@ -183,4 +191,6 @@ if __name__ == '__main__':
     logger.info("Sending email...")
     send_email(args.sender, args.receiver, args.sender_password, args.smtp_server, args.smtp_port, html)
     logger.success("Email sent successfully! If you don't receive the email, please check the configuration and the junk box.")
-
+    if args.discord_webhook_url:
+        logger.info("Sending Discord notification...")
+        notify_discord(papers, args.discord_webhook_url)
