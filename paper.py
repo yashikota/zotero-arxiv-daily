@@ -36,6 +36,10 @@ class ArxivPaper:
     def arxiv_id(self) -> str:
         return re.sub(r'v\d+$', '', self._paper.get_short_id())
     
+    @cached_property
+    def arxiv_id_with_version(self) -> str:
+        return self._paper.get_short_id()
+    
     @property
     def pdf_url(self) -> str:
         return self._paper.pdf_url

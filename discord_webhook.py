@@ -36,7 +36,11 @@ def _relevance_string(paper: ArxivPaper) -> str:
 
 
 def _link_block(paper: ArxivPaper) -> str:
-    links: list[str] = [f"[Abstract](https://arxiv.org/abs/{paper.arxiv_id})", f"[PDF]({paper.pdf_url})"]
+    links: list[str] = [
+        f"[Abstract](https://arxiv.org/abs/{paper.arxiv_id})", 
+        f"[PDF]({paper.pdf_url})",
+        f"[AlphaXiv](https://www.alphaxiv.org/overview/{paper.arxiv_id_with_version})"
+    ]
     if paper.code_url:
         links.append(f"[Code]({paper.code_url})")
     return " | ".join(links)
